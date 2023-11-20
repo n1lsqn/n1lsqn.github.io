@@ -1,0 +1,6 @@
+[submodule "theme/tranquilpeak"]
+	path = theme/tranquilpeak
+	url = https://github.com/LouisBarranqueiro/hexo-theme-tranquilpeak.git
+[submodule "themes/tranquilpeak"]
+	path = themes/tranquilpeak
+	url = https://github.com/LouisBarranqueiro/hexo-theme-tranquilpeak.git
