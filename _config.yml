@@ -3,12 +3,12 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: BackDoot
+title: BackDoor
 subtitle: ''
 description: ''
 keywords:
 author: n1lsqn
-language: ja
+language: en
 timezone: ''
 
 # URL
@@ -110,12 +110,3 @@ feed:
   type: atom
   path: atom.xml
   limit: 20
-
-toc:
-  maxdepth: 3
-  class: toc
-  slugify: transliteration
-  anchor:
-    position: after
-    symbol: '#'
-    style: header-anchor
