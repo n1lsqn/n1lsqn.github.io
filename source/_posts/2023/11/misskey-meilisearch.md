@@ -6,8 +6,9 @@ tags:
   - meilisearch
 ---
 
-### Misskeyにmeilisearchを導入する
+### Misskeyにmeilisearchを導入する方法
 
+<!-- more -->
 <!-- toc -->
 
 読み飛ばしたい人は6まで飛ばすことをお勧めする
