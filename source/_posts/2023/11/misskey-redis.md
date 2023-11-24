@@ -4,6 +4,7 @@ date: 2023-11-20 01:28:06
 tags:
   - misskey
   - redis
+thumbnailImage: https://github.com/misskey-dev/assets/blob/main/banner.png?raw=true
 ---
 
 #### 問題点
