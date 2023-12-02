@@ -6,7 +6,7 @@
   <link href="https://n1lsqn.github.io/atom.xml" rel="self"/>
   
   <link href="https://n1lsqn.github.io/"/>
-  <updated>2023-11-24T20:49:06.396Z</updated>
+  <updated>2023-12-02T14:33:20.584Z</updated>
   <id>https://n1lsqn.github.io/</id>
   
   <author>
@@ -15,6 +15,25 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>dockerにはコンテナ当たりの容量制限があるという話。</title>
+    <link href="https://n1lsqn.github.io/2023/12/02/docker-rimit/"/>
+    <id>https://n1lsqn.github.io/2023/12/02/docker-rimit/</id>
+    <published>2023-12-02T14:13:33.000Z</published>
+    <updated>2023-12-02T14:33:20.584Z</updated>
+    
+    <content type="html"><![CDATA[<p>知らなかったのだが、Dockerにはコンテナ当たりの容量制限があるらしい。<br>経緯としては、ストレージがあるのにもかかわらず、no space left on deviceというエラーが出てしまうというもの。</p><span id="more"></span><!-- toc --><p><a href="https://unrealcontainers.com/docs/environments/local-windows-10#:~:text=By%20default%2C%20Docker%20Desktop%20for,by%20following%20the%20instructions%20below">Local Development (Windows 10)</a></p><blockquote><p>By default, Docker Desktop for Windows imposes a 20GB size limit on container images, which is too low for building and running Unreal Engine containers. You will need to increase the maximum container disk size to the recommended limit of 300GB by following the instructions below.</p></blockquote><h3 id="設定"><a href="#設定" class="headerlink" title="設定"></a>設定</h3><p>Docker Desktopの設定から、Docker Engineの設定を開き、<code>&quot;defaultKeepStorage&quot;: &quot;20GB&quot;,</code>を<code>&quot;defaultKeepStorage&quot;: &quot;200GB&quot;,</code>に変更する。（各々好きな値で）</p><p>おしまい。</p>]]></content>
+    
+    
+    <summary type="html">&lt;p&gt;知らなかったのだが、Dockerにはコンテナ当たりの容量制限があるらしい。&lt;br&gt;経緯としては、ストレージがあるのにもかかわらず、no space left on deviceというエラーが出てしまうというもの。&lt;/p&gt;</summary>
+    
+    
+    
+    
+    <category term="docker" scheme="https://n1lsqn.github.io/tags/docker/"/>
+    
+  </entry>
   
   <entry>
     <title>Misskeyでハイライトやサーバークラウドのアイコンがおかしい問題の対処法</title>
