@@ -1,0 +1,673 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="BackDoor">
+    <title>Misskey 2023.11.0にmeilisearchを導入する - BackDoor</title>
+    <meta name="author" content="n1lsqn">
+    
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"n1lsqn","sameAs":["https://github.com/n1lsqn","yuuki12_25@icloud.com"],"image":"https://avatars.githubusercontent.com/u/150193036?v=4"},"articleBody":"Misskeyにmeilisearchを導入する方法\n\n\n読み飛ばしたい人は6まで飛ばすことをお勧めする\nmeilisearchのインストール公式ドキュメントをもとに進めていく\nterminal123456sudo apt updatesudo apt install curl -ycurl -L https://install.meilisearch.com | shchmod +x meilisearchsudo mv ./meilisearch /usr/local/bin/sudo useradd -d /var/lib/meilisearch -b /bin/false -m -r meilisearch\n設定ファイルの書き換えterminal12curl https://raw.githubusercontent.com/meilisearch/meilisearch/latest/config.toml &gt; meilisearch.tomlnano meilisearch.toml\nmaster_keyは16バイト以上に必要らしいので、以下のコマンドで生成する\nterminal12sudo apt install uuiduuid\n\nmeilisearch.toml12345env = &quot;production&quot;master_key = &quot;YOUR_MASTER_KEY_VALUE&quot;db_path = &quot;/var/lib/meilisearch/data&quot;dump_dir = &quot;/var/lib/meilisearch/dumps&quot;snapshot_dir = &quot;/var/lib/meilisearch/snapshots&quot;\n以上の点を書き換え後、sudo mv meilisearch.toml /etc/meilisearch/で設定ファイルを移動する\n移動後、ディレクトリを生成する\nterminal123sudo mkdir /var/lib/meilisearch/data /var/lib/meilisearch/dumps /var/lib/meilisearch/snapshotssudo chown -R meilisearch:meilisearch /var/lib/meilisearchsudo chmod 750 /var/lib/meilisearch\n\nサービスの起動sudo nano /etc/systemd/system/meilisearch.service\n/etc/systemd/system/meilisearch.service12345678910111213[Unit]Description=MeilisearchAfter=systemd-user-sessions.service[Service]Type=simpleWorkingDirectory=/var/lib/meilisearchExecStart=/usr/local/bin/meilisearch --config-file-path /etc/meilisearch.tomlUser=meilisearchGroup=meilisearch[Install]WantedBy=multi-user.target\n\nterminal123sudo systemctl enable meilisearchsudo systemctl start meilisearchsudo systemctl status meilisearch\n\nAPIキーの取得terminal123curl \\  -X GET &#x27;http://localhost:7700/keys&#x27; \\  -H &#x27;Authorization: Bearer MASTER_KEY&#x27;\nMASTER_KEYにはmeilisearch.tomlで設定したmaster_keyを入れる\n次のように返ってくるため\n12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152&#123;  &quot;results&quot;: [    &#123;      &quot;name&quot;: &quot;Default Search API Key&quot;,      &quot;description&quot;: &quot;Use it to search from the frontend&quot;,      &quot;key&quot;: &quot;d0552b41536279a0ad88bd595327b96f01176a60c2243e906c52ac02375f9bc4&quot;,      &quot;uid&quot;:&quot;74c9c733-3368-4738-bbe5-1d18a5fecb37&quot;,      &quot;actions&quot;: [        &quot;search&quot;      ],      &quot;indexes&quot;: [        &quot;*&quot;      ],      &quot;expiresAt&quot;: null,      &quot;createdAt&quot;: &quot;2022-01-01T10:00:00Z&quot;,      &quot;updatedAt&quot;: &quot;2022-01-01T10:00:00Z&quot;    &#125;,    &#123;      &quot;name&quot;: &quot;Default Admin API Key&quot;,      &quot;description&quot;: &quot;Use it for all other than search operations. Caution! Do not expose it on a public frontend&quot;,      &quot;key&quot;: &quot;380689dd379232519a54d15935750cc7625620a2ea2fc06907cb40ba5b421b6f&quot;,      &quot;uid&quot;: &quot;20f7e4c4-612c-4dd1-b783-7934cc038213&quot;,      &quot;actions&quot;: [        &quot;*&quot;      ],      &quot;indexes&quot;: [        &quot;*&quot;      ],      &quot;expiresAt&quot;: null,      &quot;createdAt&quot;: &quot;2021-08-11T10:00:00Z&quot;,      &quot;updatedAt&quot;: &quot;2021-08-11T10:00:00Z&quot;    &#125;,    &#123;      &quot;name&quot;: null,      &quot;description&quot;: &quot;Search patient records key&quot;,      &quot;key&quot;: &quot;d0552b41536279a0ad88bd595327b96f01176a60c2243e906c52ac02375f9bc4&quot;,      &quot;uid&quot;: &quot;ac5cd97d-5a4b-4226-a868-2d0eb6d197ab&quot;,      &quot;actions&quot;: [        &quot;search&quot;      ],      &quot;indexes&quot;: [        &quot;patient_medical_records&quot;      ],      &quot;expiresAt&quot;: &quot;2023-01-01T00:00:00Z&quot;,      &quot;createdAt&quot;: &quot;2022-01-01T10:00:00Z&quot;,      &quot;updatedAt&quot;: &quot;2022-01-01T10:00:00Z&quot;    &#125;  ],  &quot;offset&quot;:0,  &quot;limit&quot;:20,  &quot;total&quot;:3&#125;\nDefault Admin API Keyのkeyをコピーする\nMisskeyの設定misskeyの設定ファイルを開く\nterminal1sudo nano /home/misskey/config/default.yaml\n\n/home/misskey/config/default.yaml1234567meilisearch:  host: localhost  port: 7700  apiKey: &#x27;先ほどコピーしたkeyを入れる&#x27;#  ssl: true  index: &#x27;misskey&#x27;#  scope: local\nscopeはlocalにすると、ローカルのみ検索できるようになるindexはdomain名が推奨されている模様。今回はmisskeyとした\nindexを張るここからが本番といっても過言ではないだろう。\n\n\n上記の通り、2023.11からcreatedAtが削除されているのだ。\nそのため、misskey_meilisearch_importerを使ってindexを張る必要がある。\nterminal123456cd /home/misskeygit clone https://github.com/noellabo/misskey_meilisearch_importer.gitcd misskey_meilisearch_importerpnpm install\n\nterminal1node importer.js --config /home/misskey/.config/default.yml\nこれでindexが張られる。これでaid形式のインポートは終了。misskey -&gt; ダッシュボード -&gt; ロールよりノートの検索を有効にし、検索ができるようになる。\n私の場合まず、aidxのため、うまくいかなかった。そのため、forkし、修正したものを使っている。misskey_meilisearch_importer\n参考MisskeyでMeilisearchを導入するやり方のえるさんの投稿公式ドキュメント\n","dateCreated":"2023-11-20T01:27:06+00:00","dateModified":"2024-10-31T22:58:10+00:00","datePublished":"2023-11-20T01:27:06+00:00","description":"Misskeyにmeilisearchを導入する方法","headline":"Misskey 2023.11.0にmeilisearchを導入する","image":["https://raw.githubusercontent.com/misskey-dev/assets/main/banner.png"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"},"publisher":{"@type":"Organization","name":"n1lsqn","sameAs":["https://github.com/n1lsqn","yuuki12_25@icloud.com"],"image":"https://avatars.githubusercontent.com/u/150193036?v=4","logo":{"@type":"ImageObject","url":"https://avatars.githubusercontent.com/u/150193036?v=4"}},"url":"https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/","keywords":"misskey, meilisearch","thumbnailUrl":"https://raw.githubusercontent.com/misskey-dev/assets/main/banner.png"}</script>
+    <meta name="description" content="Misskeyにmeilisearchを導入する方法">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Misskey 2023.11.0にmeilisearchを導入する">
+<meta property="og:url" content="https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/index.html">
+<meta property="og:site_name" content="BackDoor">
+<meta property="og:description" content="Misskeyにmeilisearchを導入する方法">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-11-20T01:27:06.000Z">
+<meta property="article:modified_time" content="2024-10-31T22:58:10.774Z">
+<meta property="article:author" content="n1lsqn">
+<meta property="article:tag" content="misskey">
+<meta property="article:tag" content="meilisearch">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://avatars.githubusercontent.com/u/150193036?v=4"/>
+    
+    
+        <meta property="og:image" content="https://raw.githubusercontent.com/misskey-dev/assets/main/banner.png"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://raw.githubusercontent.com/misskey-dev/assets/main/banner.png"/>
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-wbpbvg9t9vf45fg7uksawvvpjndhemom3migwr4rtmsx9dbyxa9cagqqhv0s.min.css">
+
+    <!--STYLES END-->
+    
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            BackDoor
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://avatars.githubusercontent.com/u/150193036?v=4" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="https://avatars.githubusercontent.com/u/150193036?v=4" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">n1lsqn</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>ブログ名はStrayKidsの「Back Door」から。</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="Home"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-categories"
+                            
+                            rel="noopener"
+                            title="Categories"
+                        >
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="Tags"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="Archives"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="#about"
+                            
+                            rel="noopener"
+                            title="About"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/n1lsqn"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/yuuki12_25@icloud.com"
+                            
+                            rel="noopener"
+                            title="Mail"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Misskey 2023.11.0にmeilisearchを導入する
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2023-11-20T01:27:06+00:00">
+	
+		    Nov 20, 2023
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h3 id="Misskeyにmeilisearchを導入する方法"><a href="#Misskeyにmeilisearchを導入する方法" class="headerlink" title="Misskeyにmeilisearchを導入する方法"></a>Misskeyにmeilisearchを導入する方法</h3><span id="more"></span>
+<h1 id="table-of-contents">Table of Contents</h1><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Misskey%E3%81%ABmeilisearch%E3%82%92%E5%B0%8E%E5%85%A5%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95"><span class="toc-text">Misskeyにmeilisearchを導入する方法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#meilisearch%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB"><span class="toc-text">meilisearchのインストール</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A8%AD%E5%AE%9A%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%AE%E6%9B%B8%E3%81%8D%E6%8F%9B%E3%81%88"><span class="toc-text">設定ファイルの書き換え</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9%E3%81%AE%E8%B5%B7%E5%8B%95"><span class="toc-text">サービスの起動</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#API%E3%82%AD%E3%83%BC%E3%81%AE%E5%8F%96%E5%BE%97"><span class="toc-text">APIキーの取得</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Misskey%E3%81%AE%E8%A8%AD%E5%AE%9A"><span class="toc-text">Misskeyの設定</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#index%E3%82%92%E5%BC%B5%E3%82%8B"><span class="toc-text">indexを張る</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A7%81%E3%81%AE%E5%A0%B4%E5%90%88"><span class="toc-text">私の場合</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-text">参考</span></a></li></ol></li></ol>
+
+<p>読み飛ばしたい人は6まで飛ばすことをお勧めする</p>
+<h4 id="meilisearchのインストール"><a href="#meilisearchのインストール" class="headerlink" title="meilisearchのインストール"></a>meilisearchのインストール</h4><p><a target="_blank" rel="noopener" href="https://www.meilisearch.com/docs/learn/cookbooks/running_production">公式ドキュメント</a>をもとに進めていく</p>
+<figure class="highlight bash"><figcaption><span>terminal</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install curl -y</span><br><span class="line">curl -L https://install.meilisearch.com | sh</span><br><span class="line"><span class="built_in">chmod</span> +x meilisearch</span><br><span class="line">sudo <span class="built_in">mv</span> ./meilisearch /usr/local/bin/</span><br><span class="line">sudo useradd -d /var/lib/meilisearch -b /bin/false -m -r meilisearch</span><br></pre></td></tr></table></figure>
+<h4 id="設定ファイルの書き換え"><a href="#設定ファイルの書き換え" class="headerlink" title="設定ファイルの書き換え"></a>設定ファイルの書き換え</h4><figure class="highlight bash"><figcaption><span>terminal</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl https://raw.githubusercontent.com/meilisearch/meilisearch/latest/config.toml &gt; meilisearch.toml</span><br><span class="line">nano meilisearch.toml</span><br></pre></td></tr></table></figure>
+<p>master_keyは16バイト以上に必要らしいので、以下のコマンドで生成する</p>
+<figure class="highlight bash"><figcaption><span>terminal</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install uuid</span><br><span class="line">uuid</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight toml"><figcaption><span>meilisearch.toml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">env</span> = <span class="string">&quot;production&quot;</span></span><br><span class="line"><span class="attr">master_key</span> = <span class="string">&quot;YOUR_MASTER_KEY_VALUE&quot;</span></span><br><span class="line"><span class="attr">db_path</span> = <span class="string">&quot;/var/lib/meilisearch/data&quot;</span></span><br><span class="line"><span class="attr">dump_dir</span> = <span class="string">&quot;/var/lib/meilisearch/dumps&quot;</span></span><br><span class="line"><span class="attr">snapshot_dir</span> = <span class="string">&quot;/var/lib/meilisearch/snapshots&quot;</span></span><br></pre></td></tr></table></figure>
+<p>以上の点を書き換え後、<code>sudo mv meilisearch.toml /etc/meilisearch/</code>で設定ファイルを移動する</p>
+<p>移動後、ディレクトリを生成する</p>
+<figure class="highlight bash"><figcaption><span>terminal</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">mkdir</span> /var/lib/meilisearch/data /var/lib/meilisearch/dumps /var/lib/meilisearch/snapshots</span><br><span class="line">sudo <span class="built_in">chown</span> -R meilisearch:meilisearch /var/lib/meilisearch</span><br><span class="line">sudo <span class="built_in">chmod</span> 750 /var/lib/meilisearch</span><br></pre></td></tr></table></figure>
+
+<h4 id="サービスの起動"><a href="#サービスの起動" class="headerlink" title="サービスの起動"></a>サービスの起動</h4><p><code>sudo nano /etc/systemd/system/meilisearch.service</code></p>
+<figure class="highlight plaintext"><figcaption><span>/etc/systemd/system/meilisearch.service</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description=Meilisearch</span><br><span class="line">After=systemd-user-sessions.service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">WorkingDirectory=/var/lib/meilisearch</span><br><span class="line">ExecStart=/usr/local/bin/meilisearch --config-file-path /etc/meilisearch.toml</span><br><span class="line">User=meilisearch</span><br><span class="line">Group=meilisearch</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><figcaption><span>terminal</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl <span class="built_in">enable</span> meilisearch</span><br><span class="line">sudo systemctl start meilisearch</span><br><span class="line">sudo systemctl status meilisearch</span><br></pre></td></tr></table></figure>
+
+<h4 id="APIキーの取得"><a href="#APIキーの取得" class="headerlink" title="APIキーの取得"></a>APIキーの取得</h4><figure class="highlight bash"><figcaption><span>terminal</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl \</span><br><span class="line">  -X GET <span class="string">&#x27;http://localhost:7700/keys&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Authorization: Bearer MASTER_KEY&#x27;</span></span><br></pre></td></tr></table></figure>
+<p><code>MASTER_KEY</code>にはmeilisearch.tomlで設定したmaster_keyを入れる</p>
+<p>次のように返ってくるため</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;results&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Default Search API Key&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Use it to search from the frontend&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;key&quot;</span><span class="punctuation">:</span> <span class="string">&quot;d0552b41536279a0ad88bd595327b96f01176a60c2243e906c52ac02375f9bc4&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;uid&quot;</span><span class="punctuation">:</span><span class="string">&quot;74c9c733-3368-4738-bbe5-1d18a5fecb37&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;actions&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;search&quot;</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;indexes&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;*&quot;</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;expiresAt&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;createdAt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2022-01-01T10:00:00Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;updatedAt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2022-01-01T10:00:00Z&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Default Admin API Key&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Use it for all other than search operations. Caution! Do not expose it on a public frontend&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;key&quot;</span><span class="punctuation">:</span> <span class="string">&quot;380689dd379232519a54d15935750cc7625620a2ea2fc06907cb40ba5b421b6f&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;uid&quot;</span><span class="punctuation">:</span> <span class="string">&quot;20f7e4c4-612c-4dd1-b783-7934cc038213&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;actions&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;*&quot;</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;indexes&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;*&quot;</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;expiresAt&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;createdAt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2021-08-11T10:00:00Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;updatedAt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2021-08-11T10:00:00Z&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Search patient records key&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;key&quot;</span><span class="punctuation">:</span> <span class="string">&quot;d0552b41536279a0ad88bd595327b96f01176a60c2243e906c52ac02375f9bc4&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;uid&quot;</span><span class="punctuation">:</span> <span class="string">&quot;ac5cd97d-5a4b-4226-a868-2d0eb6d197ab&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;actions&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;search&quot;</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;indexes&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;patient_medical_records&quot;</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;expiresAt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2023-01-01T00:00:00Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;createdAt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2022-01-01T10:00:00Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;updatedAt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2022-01-01T10:00:00Z&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;limit&quot;</span><span class="punctuation">:</span><span class="number">20</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;total&quot;</span><span class="punctuation">:</span><span class="number">3</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>Default Admin API Keyの<code>key</code>をコピーする</p>
+<h4 id="Misskeyの設定"><a href="#Misskeyの設定" class="headerlink" title="Misskeyの設定"></a>Misskeyの設定</h4><p>misskeyの設定ファイルを開く</p>
+<figure class="highlight bash"><figcaption><span>terminal</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo nano /home/misskey/config/default.yaml</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight yaml"><figcaption><span>/home/misskey/config/default.yaml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">meilisearch:</span></span><br><span class="line">  <span class="attr">host:</span> <span class="string">localhost</span></span><br><span class="line">  <span class="attr">port:</span> <span class="number">7700</span></span><br><span class="line">  <span class="attr">apiKey:</span> <span class="string">&#x27;先ほどコピーしたkeyを入れる&#x27;</span></span><br><span class="line"><span class="comment">#  ssl: true</span></span><br><span class="line">  <span class="attr">index:</span> <span class="string">&#x27;misskey&#x27;</span></span><br><span class="line"><span class="comment">#  scope: local</span></span><br></pre></td></tr></table></figure>
+<p>scopeはlocalにすると、ローカルのみ検索できるようになる<br>indexはdomain名が推奨されている模様。今回はmisskeyとした</p>
+<h4 id="indexを張る"><a href="#indexを張る" class="headerlink" title="indexを張る"></a>indexを張る</h4><p>ここからが本番といっても過言ではないだろう。</p>
+<iframe src="https://fedibird.com/@noellabo/111419037137255692/embed" class="mastodon-embed" style="max-width: 100%; border: 0" width="400"></iframe><script src="https://fedibird.com/embed.js" async="async"></script>
+
+<p>上記の通り、<code>2023.11</code>から<code>createdAt</code>が削除されているのだ。</p>
+<p>そのため、<a target="_blank" rel="noopener" href="https://github.com/noellabo/misskey_meilisearch_importer">misskey_meilisearch_importer</a>を使ってindexを張る必要がある。</p>
+<figure class="highlight bash"><figcaption><span>terminal</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /home/misskey</span><br><span class="line"></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/noellabo/misskey_meilisearch_importer.git</span><br><span class="line"><span class="built_in">cd</span> misskey_meilisearch_importer</span><br><span class="line"></span><br><span class="line">pnpm install</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><figcaption><span>terminal</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node importer.js --config /home/misskey/.config/default.yml</span><br></pre></td></tr></table></figure>
+<p>これでindexが張られる。これでaid形式のインポートは終了。<code>misskey -&gt; ダッシュボード -&gt; ロール</code>よりノートの検索を有効にし、検索ができるようになる。</p>
+<h4 id="私の場合"><a href="#私の場合" class="headerlink" title="私の場合"></a>私の場合</h4><p>まず、aidxのため、うまくいかなかった。<br>そのため、forkし、修正したものを使っている。<br><a target="_blank" rel="noopener" href="https://github.com/n1lsqn/misskey_meilisearch_importer.git">misskey_meilisearch_importer</a></p>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><p><a target="_blank" rel="noopener" href="https://nanasi-apps.xyz/misskey-meilisearch">MisskeyでMeilisearchを導入するやり方</a><br><a target="_blank" rel="noopener" href="https://fedibird.com/@noellabo/111419037137255692">のえるさんの投稿</a><br><a target="_blank" rel="noopener" href="https://www.meilisearch.com/docs/learn/cookbooks/running_production">公式ドキュメント</a></p>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/meilisearch/" rel="tag">meilisearch</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/misskey/" rel="tag">misskey</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/11/20/misskey-redis/"
+                    data-tooltip="Misskeyでハイライトやサーバークラウドのアイコンがおかしい問題の対処法"
+                    aria-label="PREVIOUS: Misskeyでハイライトやサーバークラウドのアイコンがおかしい問題の対処法"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        <!--
+        <li class="post-action hide-xs">
+            <a
+                class="post-action-btn btn btn--default"
+                target="new" href="https://plus.google.com/share?url=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                url="https://misskeyshare.link/share.html?text={{post.title}}&url={{post.permalink}}"
+                aria-label="Share on Google+"
+                onclick="window.open(this.href+encodeURI(decodeURI(document.title))+'&url='+encodeURI(decodeURI(location.href)), '', 'width=500,height=400'); return false;">
+                <img src="https://raw.githubusercontent.com/misskey-dev/assets/main/icon.png" aria-hidden="true" width="30" height="30" class="button"></i>
+            </a>
+        </li>
+        -->
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2024 n1lsqn. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/11/20/misskey-redis/"
+                    data-tooltip="Misskeyでハイライトやサーバークラウドのアイコンがおかしい問題の対処法"
+                    aria-label="PREVIOUS: Misskeyでハイライトやサーバークラウドのアイコンがおかしい問題の対処法"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        <!--
+        <li class="post-action hide-xs">
+            <a
+                class="post-action-btn btn btn--default"
+                target="new" href="https://plus.google.com/share?url=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                url="https://misskeyshare.link/share.html?text={{post.title}}&url={{post.permalink}}"
+                aria-label="Share on Google+"
+                onclick="window.open(this.href+encodeURI(decodeURI(document.title))+'&url='+encodeURI(decodeURI(location.href)), '', 'width=500,height=400'); return false;">
+                <img src="https://raw.githubusercontent.com/misskey-dev/assets/main/icon.png" aria-hidden="true" width="30" height="30" class="button"></i>
+            </a>
+        </li>
+        -->
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=https://n1lsqn.github.io/2023/11/20/misskey-meilisearch/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://avatars.githubusercontent.com/u/150193036?v=4" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">n1lsqn</h4>
+        
+            <div id="about-card-bio"><p>ブログ名はStrayKidsの「Back Door」から。</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Programmer</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Nishinomiya, Japan
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s3.n1l.dev/misskey//efb68a49-43e8-4262-843b-63fcb9bd7497.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-ehv5elyjmc1kzqmgivncp4xgy3xqrg74rj2ikddcqdzjslrpare7mis9h5wz.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+
+    </body>
+</html>

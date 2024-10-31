@@ -1,0 +1,648 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="BackDoor">
+    <title>dockerにはコンテナ当たりの容量制限があるという話。 - BackDoor</title>
+    <meta name="author" content="n1lsqn">
+    
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"n1lsqn","sameAs":["https://github.com/n1lsqn","yuuki12_25@icloud.com"],"image":"https://avatars.githubusercontent.com/u/150193036?v=4"},"articleBody":"知らなかったのだが、Dockerにはコンテナ当たりの容量制限があるらしい。経緯としては、ストレージがあるのにもかかわらず、no space left on deviceというエラーが出てしまうというもの。\n\n\n\nLocal Development (Windows 10)\n\n\nBy default, Docker Desktop for Windows imposes a 20GB size limit on container images, which is too low for building and running Unreal Engine containers. You will need to increase the maximum container disk size to the recommended limit of 300GB by following the instructions below.\n\n設定Docker Desktopの設定から、Docker Engineの設定を開き、&quot;defaultKeepStorage&quot;: &quot;20GB&quot;,を&quot;defaultKeepStorage&quot;: &quot;200GB&quot;,に変更する。（各々好きな値で）\nおしまい。\n","dateCreated":"2023-12-02T23:13:33+00:00","dateModified":"2024-10-31T22:58:10+00:00","datePublished":"2023-12-02T23:13:33+00:00","description":"知らなかったのだが、Dockerにはコンテナ当たりの容量制限があるらしい。経緯としては、ストレージがあるのにもかかわらず、no space left on deviceというエラーが出てしまうというもの。","headline":"dockerにはコンテナ当たりの容量制限があるという話。","image":["https://www.docker.com/wp-content/uploads/2023/08/logo-guide-logos-1.svg"],"mainEntityOfPage":{"@type":"WebPage","@id":"https://n1lsqn.github.io/2023/12/02/docker-rimit/"},"publisher":{"@type":"Organization","name":"n1lsqn","sameAs":["https://github.com/n1lsqn","yuuki12_25@icloud.com"],"image":"https://avatars.githubusercontent.com/u/150193036?v=4","logo":{"@type":"ImageObject","url":"https://avatars.githubusercontent.com/u/150193036?v=4"}},"url":"https://n1lsqn.github.io/2023/12/02/docker-rimit/","keywords":"docker","thumbnailUrl":"https://www.docker.com/wp-content/uploads/2023/08/logo-guide-logos-1.svg"}</script>
+    <meta name="description" content="知らなかったのだが、Dockerにはコンテナ当たりの容量制限があるらしい。経緯としては、ストレージがあるのにもかかわらず、no space left on deviceというエラーが出てしまうというもの。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="dockerにはコンテナ当たりの容量制限があるという話。">
+<meta property="og:url" content="https://n1lsqn.github.io/2023/12/02/docker-rimit/index.html">
+<meta property="og:site_name" content="BackDoor">
+<meta property="og:description" content="知らなかったのだが、Dockerにはコンテナ当たりの容量制限があるらしい。経緯としては、ストレージがあるのにもかかわらず、no space left on deviceというエラーが出てしまうというもの。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-12-02T23:13:33.000Z">
+<meta property="article:modified_time" content="2024-10-31T22:58:10.774Z">
+<meta property="article:author" content="n1lsqn">
+<meta property="article:tag" content="docker">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://avatars.githubusercontent.com/u/150193036?v=4"/>
+    
+    
+        <meta property="og:image" content="https://www.docker.com/wp-content/uploads/2023/08/logo-guide-logos-1.svg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="https://www.docker.com/wp-content/uploads/2023/08/logo-guide-logos-1.svg"/>
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-wbpbvg9t9vf45fg7uksawvvpjndhemom3migwr4rtmsx9dbyxa9cagqqhv0s.min.css">
+
+    <!--STYLES END-->
+    
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+            
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            BackDoor
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Open the link: /#about"
+            >
+        
+        
+            <img class="header-picture" src="https://avatars.githubusercontent.com/u/150193036?v=4" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="https://avatars.githubusercontent.com/u/150193036?v=4" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">n1lsqn</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>ブログ名はStrayKidsの「Back Door」から。</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="Home"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-categories"
+                            
+                            rel="noopener"
+                            title="Categories"
+                        >
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="Tags"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="Archives"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="#about"
+                            
+                            rel="noopener"
+                            title="About"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/n1lsqn"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/yuuki12_25@icloud.com"
+                            
+                            rel="noopener"
+                            title="Mail"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/atom.xml"
+                            
+                            rel="noopener"
+                            title="RSS"
+                        >
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            dockerにはコンテナ当たりの容量制限があるという話。
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2023-12-02T23:13:33+00:00">
+	
+		    Dec 02, 2023
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>知らなかったのだが、Dockerにはコンテナ当たりの容量制限があるらしい。<br>経緯としては、ストレージがあるのにもかかわらず、no space left on deviceというエラーが出てしまうというもの。</p>
+<span id="more"></span>
+<h1 id="table-of-contents">Table of Contents</h1><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A8%AD%E5%AE%9A"><span class="toc-text">設定</span></a></li></ol>
+
+<p><a target="_blank" rel="noopener" href="https://unrealcontainers.com/docs/environments/local-windows-10#:~:text=By%20default%2C%20Docker%20Desktop%20for,by%20following%20the%20instructions%20below">Local Development (Windows 10)
+</a></p>
+<blockquote>
+<p>By default, Docker Desktop for Windows imposes a 20GB size limit on container images, which is too low for building and running Unreal Engine containers. You will need to increase the maximum container disk size to the recommended limit of 300GB by following the instructions below.</p>
+</blockquote>
+<h3 id="設定"><a href="#設定" class="headerlink" title="設定"></a>設定</h3><p>Docker Desktopの設定から、Docker Engineの設定を開き、<code>&quot;defaultKeepStorage&quot;: &quot;20GB&quot;,</code>を<code>&quot;defaultKeepStorage&quot;: &quot;200GB&quot;,</code>に変更する。（各々好きな値で）</p>
+<p>おしまい。</p>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/docker/" rel="tag">docker</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/02/27/misskey-migration/"
+                    data-tooltip="misskeyのdbをバックアップから復元する。"
+                    aria-label="PREVIOUS: misskeyのdbをバックアップから復元する。"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/11/20/misskey-redis/"
+                    data-tooltip="Misskeyでハイライトやサーバークラウドのアイコンがおかしい問題の対処法"
+                    aria-label="NEXT: Misskeyでハイライトやサーバークラウドのアイコンがおかしい問題の対処法"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        <!--
+        <li class="post-action hide-xs">
+            <a
+                class="post-action-btn btn btn--default"
+                target="new" href="https://plus.google.com/share?url=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                url="https://misskeyshare.link/share.html?text={{post.title}}&url={{post.permalink}}"
+                aria-label="Share on Google+"
+                onclick="window.open(this.href+encodeURI(decodeURI(document.title))+'&url='+encodeURI(decodeURI(location.href)), '', 'width=500,height=400'); return false;">
+                <img src="https://raw.githubusercontent.com/misskey-dev/assets/main/icon.png" aria-hidden="true" width="30" height="30" class="button"></i>
+            </a>
+        </li>
+        -->
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2024 n1lsqn. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2024/02/27/misskey-migration/"
+                    data-tooltip="misskeyのdbをバックアップから復元する。"
+                    aria-label="PREVIOUS: misskeyのdbをバックアップから復元する。"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2023/11/20/misskey-redis/"
+                    data-tooltip="Misskeyでハイライトやサーバークラウドのアイコンがおかしい問題の対処法"
+                    aria-label="NEXT: Misskeyでハイライトやサーバークラウドのアイコンがおかしい問題の対処法"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        <!--
+        <li class="post-action hide-xs">
+            <a
+                class="post-action-btn btn btn--default"
+                target="new" href="https://plus.google.com/share?url=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                url="https://misskeyshare.link/share.html?text={{post.title}}&url={{post.permalink}}"
+                aria-label="Share on Google+"
+                onclick="window.open(this.href+encodeURI(decodeURI(document.title))+'&url='+encodeURI(decodeURI(location.href)), '', 'width=500,height=400'); return false;">
+                <img src="https://raw.githubusercontent.com/misskey-dev/assets/main/icon.png" aria-hidden="true" width="30" height="30" class="button"></i>
+            </a>
+        </li>
+        -->
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="Table of Contents">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=https://n1lsqn.github.io/2023/12/02/docker-rimit/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://avatars.githubusercontent.com/u/150193036?v=4" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">n1lsqn</h4>
+        
+            <div id="about-card-bio"><p>ブログ名はStrayKidsの「Back Door」から。</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Programmer</p>
+
+            </div>
+        
+        
+            <div id="about-card-location">
+                <i class="fa fa-map-marker-alt"></i>
+                <br/>
+                Nishinomiya, Japan
+            </div>
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('https://s3.n1l.dev/misskey//efb68a49-43e8-4262-843b-63fcb9bd7497.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-ehv5elyjmc1kzqmgivncp4xgy3xqrg74rj2ikddcqdzjslrpare7mis9h5wz.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+
+    </body>
+</html>
